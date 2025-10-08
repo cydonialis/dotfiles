@@ -1,3 +1,6 @@
 [submodule "fast-syntax-highlighting"]
 	path = _oh-my-zsh/custom/plugins/fast-syntax-highlighting
 	url = https://github.com/zdharma-continuum/fast-syntax-highlighting.git
+[submodule "vimrc"]
+	path = _vim_runtime
+	url = https://github.com/cydonialis/vimrc
