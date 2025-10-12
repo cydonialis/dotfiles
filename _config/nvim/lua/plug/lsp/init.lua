@@ -91,7 +91,7 @@ return {
 
       -- lua
       lspconfig("lua_ls", {
-        root_dir = lspconfig_util.root_pattern("init.lua", ".luarc.json", "stylua.toml", ".git"),
+        -- root_dir = lspconfig_util.root_pattern("init.lua", ".luarc.json", "stylua.toml", ".git"),
         on_attach = conf.on_attach,
         capabilities = conf.capabilities,
         -- https://github.com/sumneko/lua-language-server/wiki/Settings
@@ -178,7 +178,7 @@ return {
         end),
         -- don't use .clangd or .clang-format/.clang-tidy as root_dir patterns
         -- don't use .git as root pattern due to submodules
-        root_dir = lspconfig_util.root_pattern("compile_commands.json"),
+        -- root_dir = lspconfig_util.root_pattern("compile_commands.json"),
         cmd = {
           "clangd-17",
           "--all-scopes-completion=true",
@@ -202,7 +202,7 @@ return {
       --- python settings
       -- prefer `pyproject.toml` to configure per project
       lspconfig("basedpyright", {
-        root_dir = lspconfig_util.root_pattern("pyproject.toml"),
+        -- root_dir = lspconfig_util.root_pattern("pyproject.toml"),
         basedright = {
           analysis = {
             diagnosticMode = "openFilesOnly",
