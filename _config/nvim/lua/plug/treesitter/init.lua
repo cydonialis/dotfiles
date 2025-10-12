@@ -54,6 +54,7 @@ return {
           "vimdoc",
           "yaml",
           "javascript",
+          "mlir",
         },
         sync_install = true,
         indent = {
