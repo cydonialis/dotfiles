@@ -87,6 +87,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 plugins=(
   git fast-syntax-highlighting 
   # zsh-autocomplete
+  you-should-use
   sudo z extract)
 
 source $ZSH/oh-my-zsh.sh
