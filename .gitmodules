@@ -13,3 +13,6 @@
 [submodule "zsh-you-should-use"]
 	path = _oh-my-zsh/custom/plugins/you-should-use
 	url = https://github.com/MichaelAquilina/zsh-you-should-use.git
+[submodule "wezterm-config"]
+	path = _config/wezterm
+	url = git@github.com:cydonialis/wezterm-config.git
