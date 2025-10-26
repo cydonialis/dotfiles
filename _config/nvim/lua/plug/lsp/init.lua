@@ -37,6 +37,7 @@ return {
           capabilities = conf.capabilities,
         })
       end
+      vim.lsp.enable(simple_ls)
 
       -- rust
       vim.g.rustaceanvim = {
@@ -79,6 +80,7 @@ return {
         on_attach = conf.on_attach,
         capabilities = conf.capabilities,
       })
+      vim.lsp.enable("gopls")
 
       -- bash/zsh
       -- TODO: duplication of conform+nvim-lint
@@ -88,6 +90,7 @@ return {
         on_attach = conf.on_attach,
         capabilities = conf.capabilities,
       })
+      vim.lsp.enable("bashls")
 
       -- lua
       lspconfig("lua_ls", {
@@ -159,6 +162,7 @@ return {
           },
         },
       })
+      vim.lsp.enable("lua_ls")
 
       lspconfig("clangd", {
         ---@param client vim.lsp.Client
@@ -180,7 +184,7 @@ return {
         -- don't use .git as root pattern due to submodules
         -- root_dir = lspconfig_util.root_pattern("compile_commands.json"),
         cmd = {
-          "clangd-17",
+          "clangd",
           "--all-scopes-completion=true",
           "--background-index=true",
           "--background-index-priority=normal",
@@ -198,6 +202,7 @@ return {
           "--ranking-model=heuristics",
         },
       })
+      vim.lsp.enable("clangd")
 
       --- python settings
       -- prefer `pyproject.toml` to configure per project
@@ -234,7 +239,10 @@ return {
           },
         },
       })
+      vim.lsp.enable("basedpyright")
+
       lspconfig("ruff", {})
+      vim.lsp.enable("ruff")
     end,
   },
 
