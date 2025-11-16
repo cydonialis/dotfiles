@@ -62,6 +62,8 @@ def _get_src_files(root: str) -> list[str]:
     plt_root = os.path.join(root, PLT)
     for r in [root, plt_root]:
         for src in os.listdir(r):
+            if src.startswith("_config") or src.startswith("_local"):
+                continue
             if src.startswith("_"):
                 src_files.append(os.path.join(r, src))
     return src_files
