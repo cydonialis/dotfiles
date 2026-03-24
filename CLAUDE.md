@@ -42,6 +42,18 @@ Edit the underscored file in the repository; the symlink in `$HOME` will point t
 - Files placed in `Darwin/` are used only on macOS.
 - The install script merges the platform directory with the root when gathering source files.
 
+### Creating Offline Archives
+
+```bash
+python3 package.py                 # create dotfiles.zip archive for offline installation
+python3 package.py --dryrun        # list files that would be included
+python3 package.py --verbose       # verbose output showing files added
+python3 package.py --output custom.zip  # custom output filename
+python3 package.py --exclude ".tmp" --exclude ".log"  # exclude additional patterns
+```
+
+The archive includes all configuration files and pre‑downloaded plugins, excluding version control (`.git`), backups (`.BAK`), Python cache files, and existing `.zip` files. Use this archive to install dotfiles on a non‑network device. After transferring the archive to the target device, extract it and run `python3 install.py` and `python3 local_config_install.py`.
+
 ## Repository Structure
 
 - `_*` – source dotfiles (zsh, tmux, vim, etc.)
@@ -52,6 +64,7 @@ Edit the underscored file in the repository; the symlink in `$HOME` will point t
 - `misc/` – miscellaneous scripts and packages
 - `install.py` – main installation script
 - `local_config_install.py` – script for `_config` and `_local`
+- `package.py` – create .zip archive for offline installation
 
 ## Git Submodules
 

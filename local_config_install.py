@@ -14,6 +14,12 @@ DST_DIR = os.path.realpath(os.path.expandvars("$HOME"))
 BAK_DIR: str = os.path.join(CUR_DIR, ".BAK")
 
 
+class MLevel(object):
+    check = "✔"
+    cross = "✗"
+    other = "○"
+
+
 def _ensure_bakdir(bakdir: str):
     """Ensure backup directory exists."""
     if not os.path.exists(bakdir):
@@ -35,6 +41,36 @@ def _get_src_files(root: str) -> list[str]:
     for src in os.listdir(os.path.join(root, "_local", "share")):
         src_files.append(os.path.join("_local", "share", src))
     return src_files
+
+
+def __dot_mark(dst: str) -> str:
+    if not os.path.exists(dst):
+        mark = MLevel.check
+    elif os.path.islink(dst):
+        mark = MLevel.other
+    else:
+        mark = MLevel.cross
+    return mark
+
+
+def _find_backup_path(src: str, bakdir: str) -> str | None:
+    """Find existing backup path for src, checking for .bak.{n} suffixes."""
+    src_rel = os.path.relpath(src, CUR_DIR)
+    backup_path = os.path.join(bakdir, src_rel)
+    if os.path.exists(backup_path) and not os.path.islink(backup_path):
+        return backup_path
+    # Check for .bak.{n} suffixes
+    base = backup_path
+    counter = 1
+    while os.path.exists(f"{base}.bak.{counter}"):
+        if not os.path.islink(f"{base}.bak.{counter}"):
+            return f"{base}.bak.{counter}"
+        counter += 1
+    return None
+
+
+def __recover_mark(src: str, bakdir: str) -> str:
+    return MLevel.check if _find_backup_path(src, bakdir) is not None else MLevel.cross
 
 
 def _get_backup_path(src: str, bakdir: str) -> str:
@@ -78,22 +114,60 @@ def _dot(src: str, dst: str, bakdir: str):
 
 
 def _dot_dryrun(src: str, dst: str, bakdir: str):
-    """Dry-run: print what would be done."""
-    dst_exist = os.path.exists(dst) or os.path.islink(dst)
-    if dst_exist:
-        if os.path.islink(dst):
-            print(f"[dryrun] Would remove symlink: {dst}")
-        else:
-            backup_path = _get_backup_path(src, bakdir)
-            print(f"[dryrun] Would backup {dst} to {backup_path}")
+    """Dry-run: print what would be done with install.py style."""
+    mark = __dot_mark(dst)
+    rel_src = os.path.relpath(src, DST_DIR)
+    print("{0:<60} ⇒ \t[{m}] {1:<50}".format(rel_src, dst, m=mark))
+
+
+def _recover_dryrun(src: str, dst: str, bakdir: str):
+    """Dry-run for recovery."""
+    mark = __recover_mark(src, bakdir)
+    backup_path = _find_backup_path(src, bakdir)
+    if backup_path:
+        rel_bak = os.path.relpath(backup_path, CUR_DIR)
+        print("{0:<60} ->\t[{m}] {1:<50}".format(rel_bak, dst, m=mark))
     else:
-        print(f"[dryrun] Would create symlink: {dst} -> {src}")
+        # No backup found
+        rel_src = os.path.relpath(src, CUR_DIR)
+        print("{0:<60} ->\t[{m}] {1:<50}".format(rel_src, dst, m=mark))
+
+
+def _recover(src: str, dst: str, bakdir: str):
+    """Restore original file from backup."""
+    backup_path = _find_backup_path(src, bakdir)
+    if backup_path is None:
+        print(f"No backup found for {dst}", file=sys.stderr)
+        return
+
+    # Remove destination symlink if it exists
+    if os.path.exists(dst) or os.path.islink(dst):
+        if os.path.islink(dst):
+            os.unlink(dst)
+        else:
+            # Should not happen - dst should be symlink we created
+            # But just in case, backup current dst before overwriting
+            temp_backup = backup_path + ".temp"
+            shutil.move(dst, temp_backup)
+            print(f"Warning: {dst} was not a symlink, backed up to {temp_backup}", file=sys.stderr)
+
+    # Restore from backup
+    print(f"Restoring {dst} from {backup_path}", file=sys.stderr)
+    shutil.move(backup_path, dst)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Install _config/ and _local/share/ to $HOME/.config/ and $HOME/.local/share/",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "-r",
+        "--recover",
+        dest="recover",
+        action="store_true",
+        required=False,
+        help="restore original config/local files from backup",
     )
     parser.add_argument(
         "-n",
@@ -116,20 +190,40 @@ def parse_args() -> argparse.Namespace:
 
 def main():
     args = parse_args()
-    if not args.dryrun:
-        _ensure_bakdir(args.bakdir)
 
-    src_files = _get_src_files(CUR_DIR)
-    print(f"Found {len(src_files)} config/local items to symlink:")
+    if not args.recover:
+        # Install mode
+        if not args.dryrun:
+            _ensure_bakdir(args.bakdir)
 
-    for src_file in src_files:
-        src_abs = os.path.join(CUR_DIR, src_file)
-        dst = os.path.join(DST_DIR, "." + src_file[1:])  # Remove leading '_'
-        print(f"  {src_file} -> {dst}")
-        if args.dryrun:
-            _dot_dryrun(src_abs, dst, args.bakdir)
-        else:
-            _dot(src_abs, dst, args.bakdir)
+        src_files = _get_src_files(CUR_DIR)
+        print(f"Found {len(src_files)} config/local items to symlink:")
+
+        for src_file in src_files:
+            src_abs = os.path.join(CUR_DIR, src_file)
+            dst = os.path.join(DST_DIR, "." + src_file[1:])  # Remove leading '_'
+            if args.dryrun:
+                _dot_dryrun(src_abs, dst, args.bakdir)
+            else:
+                _dot(src_abs, dst, args.bakdir)
+    else:
+        # Recover mode
+        if not args.dryrun:
+            # Ensure backup directory exists for recovery
+            if not os.path.exists(args.bakdir):
+                print(f"Backup directory {args.bakdir} does not exist, nothing to recover.", file=sys.stderr)
+                return
+
+        src_files = _get_src_files(CUR_DIR)
+        print(f"Found {len(src_files)} config/local items to recover:")
+
+        for src_file in src_files:
+            src_abs = os.path.join(CUR_DIR, src_file)
+            dst = os.path.join(DST_DIR, "." + src_file[1:])  # Remove leading '_'
+            if args.dryrun:
+                _recover_dryrun(src_abs, dst, args.bakdir)
+            else:
+                _recover(src_abs, dst, args.bakdir)
 
     print("Done.")
 
