@@ -24,6 +24,8 @@ The script automatically skips `_config` and `_local` directories; those are han
 python3 local_config_install.py    # symlink contents of `_config/` and `_local/share/` to `$HOME/.config/` and `$HOME/.local/share/`
 ```
 
+This script is intended for offline installation where Neovim plugins are already downloaded (they reside in `_local/share/nvim/lazy/`). It preserves directory hierarchy when backing up existing files (e.g., `~/.config/nvim` → `.BAK/_config/nvim`).
+
 ### Adding a New Dotfile
 
 1. Add the configuration file with an underscore prefix (e.g., `_newtool.conf`) in the repository root or in the platform‑specific directory (`Linux/` or `Darwin/`).
@@ -76,7 +78,8 @@ git submodule update --init --recursive
 
 ## Notes
 
-- The install script backs up existing dotfiles to `.BAK/` before creating symlinks. Use `--recover` to restore them.
+- The install script backs up existing dotfiles to `.BAK/_bak/` preserving source hierarchy (e.g., `Linux/_file` → `.BAK/_bak/Linux/_file`). Use `--recover` to restore them.
+- `local_config_install.py` backs up to `.BAK/` preserving source hierarchy (e.g., `_config/nvim` → `.BAK/_config/nvim`).
 - Files starting with `_config` or `_local` are intentionally skipped by `install.py`; use `local_config_install.py` for those.
 - The repository contains a `requirements.txt` (in `misc/pkgs/`) listing Python dependencies for Neovim and other tools.
 - Recent changes are documented in `History.md`.

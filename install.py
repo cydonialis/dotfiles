@@ -22,7 +22,7 @@ class FileInfo(object):
         src_name = os.path.basename(src)
         # replace "_" with "."
         dst = os.path.join(DST_DIR, "." + src_name[1:])
-        bak = os.path.join(bakdir, PREFIX + os.path.basename(dst))
+        bak = _get_backup_path(src, bakdir)
         return cls(src, dst, bak)
 
     @override
@@ -67,6 +67,27 @@ def _get_src_files(root: str) -> list[str]:
             if src.startswith("_"):
                 src_files.append(os.path.join(r, src))
     return src_files
+
+
+def _get_backup_path(src: str, bakdir: str) -> str:
+    """Compute backup path preserving source hierarchy under _bak/ subdirectory.
+
+    Example: src='/path/to/_tmux.conf' -> bakdir/_bak/_tmux.conf
+             src='/path/to/Linux/_somefile' -> bakdir/_bak/Linux/_somefile
+    """
+    # Get path relative to CUR_DIR
+    src_rel = os.path.relpath(src, CUR_DIR)
+    # Backup path under _bak/ subdirectory
+    backup_path = os.path.join(bakdir, PREFIX, src_rel)
+    # Ensure backup path is unique if it already exists
+    if os.path.exists(backup_path):
+        # Add incremental suffix .bak.1, .bak.2, etc.
+        base = backup_path
+        counter = 1
+        while os.path.exists(f"{base}.bak.{counter}"):
+            counter += 1
+        backup_path = f"{base}.bak.{counter}"
+    return backup_path
 
 
 def _ensure_bakdir(bakdir: str):
@@ -144,6 +165,8 @@ def _dot(finfo: FileInfo):
         if os.path.islink(finfo.dst):
             os.unlink(finfo.dst)
         else:
+            # Ensure parent directory of backup path exists
+            os.makedirs(os.path.dirname(finfo.bak), exist_ok=True)
             shutil.move(finfo.dst, finfo.bak)
     rel_src = os.path.relpath(finfo.src, DST_DIR)
     os.symlink(rel_src, finfo.dst)
