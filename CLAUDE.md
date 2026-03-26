@@ -52,7 +52,7 @@ python3 package.py --output custom.zip  # custom output filename
 python3 package.py --exclude ".tmp" --exclude ".log"  # exclude additional patterns
 ```
 
-The archive includes all configuration files and pre‑downloaded plugins, excluding version control (`.git`), backups (`.BAK`), Python cache files, and existing `.zip` files. Use this archive to install dotfiles on a non‑network device. After transferring the archive to the target device, extract it and run `python3 install.py` and `python3 local_config_install.py`.
+The archive includes all configuration files and pre‑downloaded plugins, excluding version control (`.git`), backups (`.BAK`), Python cache files, and existing `.zip` files. Patterns starting with `^/` match from the root directory (e.g., `^/.git` excludes only the root `.git` directory, not submodule `.git` directories). Use this archive to install dotfiles on a non‑network device. After transferring the archive to the target device, extract it and run `python3 install.py` and `python3 local_config_install.py`.
 
 ## Repository Structure
 

@@ -15,12 +15,53 @@ from pathlib import Path
 from typing import List, Optional
 
 
-def should_exclude(path: Path, exclude_patterns: List[str]) -> bool:
-    """Return True if path matches any exclude pattern."""
+def should_exclude(path: Path, exclude_patterns: List[str], root_dir: Optional[Path] = None) -> bool:
+    """Return True if path matches any exclude pattern.
+
+    Pattern matching rules:
+    - If pattern starts with '^/': match from root directory (root-relative)
+    - Else if pattern contains '/': match as substring (path fragment)
+    - Else if pattern starts with '.': match as file extension (if path is a file)
+      AND also match as exact component name (for directory names starting with dot)
+    - Else: match as exact component name (directory or file name)
+    """
+    # Compute relative path if root_dir provided
+    rel_path = None
+    if root_dir:
+        try:
+            rel_path = path.relative_to(root_dir)
+        except ValueError:
+            rel_path = None
+
     path_str = str(path)
+    parts = path.parts
+
     for pattern in exclude_patterns:
-        if pattern in path_str:
+        # Root-relative pattern (new feature: starts with '^/')
+        if pattern.startswith('^/') and rel_path:
+            pattern_suffix = pattern[2:]  # Remove '^/' prefix
+            if pattern_suffix:
+                pattern_parts = pattern_suffix.split('/')
+                pattern_parts = [p for p in pattern_parts if p]  # Remove empty parts
+                # Check if path starts with pattern components
+                if rel_path.parts[:len(pattern_parts)] == tuple(pattern_parts):
+                    return True
+            continue  # Don't fall through to other pattern types
+
+        # Path fragment match (contains '/')
+        if '/' in pattern:
+            if pattern in path_str:
+                return True
+            continue
+
+        # Exact component match (directory or file name)
+        if pattern in parts:
             return True
+
+        # File extension match (pattern starts with dot)
+        if pattern.startswith('.') and path.is_file() and path.name.endswith(pattern):
+            return True
+
     return False
 
 
@@ -31,12 +72,12 @@ def collect_files(root_dir: Path, exclude_patterns: List[str]) -> List[Path]:
         # Modify dirnames in-place to skip excluded directories
         dirnames[:] = [
             d for d in dirnames
-            if not should_exclude(Path(dirpath) / d, exclude_patterns)
+            if not should_exclude(Path(dirpath) / d, exclude_patterns, root_dir)
         ]
 
         for filename in filenames:
             filepath = Path(dirpath) / filename
-            if not should_exclude(filepath, exclude_patterns):
+            if not should_exclude(filepath, exclude_patterns, root_dir):
                 files.append(filepath)
     return files
 
@@ -51,7 +92,7 @@ def create_dotfiles_zip(
     """Create a zip archive of dotfiles."""
     if exclude_patterns is None:
         exclude_patterns = [
-            ".git",
+            "^/.git",
             ".BAK",
             "__pycache__",
             ".pyc",
@@ -149,7 +190,7 @@ def main():
 
     # Default exclude patterns
     default_exclude = [
-        ".git",
+        "^/.git",
         ".BAK",
         "__pycache__",
         ".pyc",
