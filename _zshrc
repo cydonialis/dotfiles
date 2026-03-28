@@ -148,3 +148,6 @@ export NVM_DIR="$HOME/.nvm"
 
 # OpenClaw Completion
 source "$HOME/.openclaw/completions/openclaw.zsh"
+
+# opencode
+export PATH=/home/yadong/.opencode/bin:$PATH
