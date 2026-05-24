@@ -12,6 +12,10 @@ export ZSH="$HOME/.oh-my-zsh"
 
 export PATH=$PATH:~/.local/bin
 
+# CUDA
+export PATH=/usr/local/cuda/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+
 # 2025-10-8
 if [ -e ~/.customrc ]; then
     source ~/.customrc
@@ -138,6 +142,7 @@ fi
 unset __conda_setup
 # <<< conda initialize <<<
 
+alias ls="eza --icons"
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
@@ -146,8 +151,3 @@ export NVM_DIR="$HOME/.nvm"
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# OpenClaw Completion
-source "$HOME/.openclaw/completions/openclaw.zsh"
-
-# opencode
-export PATH=/home/yadong/.opencode/bin:$PATH
