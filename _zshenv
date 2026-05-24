@@ -39,7 +39,7 @@ unset GTK_IM_MODULE
 unset QT_IM_MODULE
 export XMODIFIERS="@im=fcitx"
 
-export XDG_RUNTIME_DIR=/tmp/runtime-"$USER"
+# export XDG_RUNTIME_DIR=/tmp/runtime-"$USER"
 
 # use strict mode: http://redsymbol.net/articles/unofficial-bash-strict-mode/
 # set -u -e will cause quite lots of issues

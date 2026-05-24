@@ -169,6 +169,7 @@ def _dot(finfo: FileInfo):
             os.makedirs(os.path.dirname(finfo.bak), exist_ok=True)
             shutil.move(finfo.dst, finfo.bak)
     rel_src = os.path.relpath(finfo.src, DST_DIR)
+    os.makedirs(os.path.dirname(finfo.dst), exist_ok=True)
     os.symlink(rel_src, finfo.dst)
 
 
