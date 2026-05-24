@@ -41,11 +41,23 @@ def should_exclude(path: Path, exclude_patterns: List[str], root_dir: Optional[P
         if pattern.startswith('^/') and rel_path:
             pattern_suffix = pattern[2:]  # Remove '^/' prefix
             if pattern_suffix:
-                pattern_parts = pattern_suffix.split('/')
-                pattern_parts = [p for p in pattern_parts if p]  # Remove empty parts
-                # Check if path starts with pattern components
-                if rel_path.parts[:len(pattern_parts)] == tuple(pattern_parts):
-                    return True
+                # Check if pattern contains wildcard
+                if '*' in pattern_suffix:
+                    # Split into prefix (before *) and suffix (after *)
+                    prefix, suffix = pattern_suffix.split('*', 1)
+                    prefix_parts = [p for p in prefix.split('/') if p]
+                    rel_str = str(rel_path)
+                    # Match if path starts with prefix, ends with suffix,
+                    # and doesn't have extra path components beyond the match
+                    if (rel_str.startswith(prefix) and rel_str.endswith(suffix) and
+                            len(rel_path.parts) == len(prefix_parts) + 1):
+                        return True
+                else:
+                    pattern_parts = pattern_suffix.split('/')
+                    pattern_parts = [p for p in pattern_parts if p]  # Remove empty parts
+                    # Check if path starts with pattern components
+                    if rel_path.parts[:len(pattern_parts)] == tuple(pattern_parts):
+                        return True
             continue  # Don't fall through to other pattern types
 
         # Path fragment match (contains '/')
@@ -97,6 +109,7 @@ def create_dotfiles_zip(
             "__pycache__",
             ".pyc",
             ".zip",  # exclude existing zip files
+            "^/_oh-my-zsh/custom/*.zsh",  # exclude loose zsh files, keep plugins/themes
         ]
 
     source_path = Path(source_dir).resolve()
@@ -195,6 +208,7 @@ def main():
         "__pycache__",
         ".pyc",
         ".zip",
+        "^/_oh-my-zsh/custom/*.zsh",  # exclude loose zsh files, keep plugins/themes
     ]
 
     # Combine default and user-provided exclude patterns
